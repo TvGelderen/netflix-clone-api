@@ -4,6 +4,7 @@ using NetflixCloneAPI.Models;
 using NetflixCloneAPI.DTO;
 using System.Security.Claims;
 using System.Security.Cryptography;
+using NetflixCloneAPI.Data;
 
 namespace NetflixCloneAPI.Controllers
 {
@@ -11,56 +12,41 @@ namespace NetflixCloneAPI.Controllers
     [Route("/api/[controller]")]
     public class AuthController : Controller
     {
+        private readonly DatabaseContext _context;
+        private readonly IConfiguration _config;
+
+        public AuthController(DatabaseContext context, IConfiguration config)
+        {
+            _context = context;
+            _config = config;
+        }
+
         [HttpPost("register")]
         [AllowAnonymous]
-        public IActionResult Register(CreateUserDTO request)
+        public async IActionResult Register(CreateUserDTO request)
         {
-            User user = new()
+            var user = _context.Users.FirstOrDefault(user => user.Email.Equals(request.Email));
+
+            if (user != null)
             {
-                Id = Guid.NewGuid(),
-                Email = request.Email
-            };
+                return BadRequest("That email is already taken.");
+            }
 
             CreatePasswordHash(request.Password, out byte[] passwordHash, out byte[] passwordSalt);
 
+            User newUser = new()
+            {
+                Id = Guid.NewGuid(),
+                Email = request.Email,
+                PasswordHash = passwordHash,
+                PasswordSalt = passwordSalt
+            };
+
+            await _context.Users.AddAsync(newUser);
+            await _context.SaveChangesAsync();
+
             return Ok(request);
         }
-        //public async Task<ActionResult> Register(NewUserDto request)
-        //{
-        //    var user = _context.Users.FirstOrDefault(user => user.Username.Equals(request.Username));
-
-        //    if (user != null)
-        //    {
-        //        return BadRequest("That username is already taken.");
-        //    }
-
-        //    CreatePasswordHash(request.Password, out byte[] passwordHash, out byte[] passwordSalt);
-
-        //    User newUser = new()
-        //    {
-        //        Id = new Guid(),
-        //        Username = request.Username,
-        //        Email = request.Email,
-        //        PhoneNumber = request.PhoneNumber,
-        //        PasswordHash = passwordHash,
-        //        PasswordSalt = passwordSalt,
-        //        AuthType = "Email"
-        //    };
-
-        //    await _context.AddAsync(newUser);
-        //    await _context.SaveChangesAsync();
-
-        //    ReturnUserDto returnUser = new()
-        //    {
-        //        Uid = newUser.Id.ToString(),
-        //        Username = newUser.Username,
-        //        Email = newUser.Email,
-        //        Role = newUser.Role,
-        //        AccessToken = ""
-        //    };
-
-        //    return Ok(returnUser);
-        //}
 
         static void CreatePasswordHash(string password, out byte[] passwordHash, out byte[] passwordSalt)
         {
