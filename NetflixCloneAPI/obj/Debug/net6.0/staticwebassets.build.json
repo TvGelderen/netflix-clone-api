@@ -1,0 +1,11 @@
+{
+  "Version": 1,
+  "Hash": "RblHaaGGI6G02e1en6AJ4rtbimqlXqtxFrKkB6LetGs=",
+  "Source": "NetflixCloneAPI",
+  "BasePath": "_content/NetflixCloneAPI",
+  "Mode": "Default",
+  "ManifestType": "Build",
+  "ReferencedProjectsConfiguration": [],
+  "DiscoveryPatterns": [],
+  "Assets": []
+}
